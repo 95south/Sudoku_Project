@@ -1,0 +1,321 @@
+
+TEST.exe:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <_start>:
+80000000:	70040497          	auipc	s1,0x70040
+80000004:	00048493          	mv	s1,s1
+80000008:	70041a97          	auipc	s5,0x70041
+8000000c:	ff8a8a93          	addi	s5,s5,-8 # f0041000 <transposed>
+80000010:	04000913          	li	s2,64
+80000014:	4985                	li	s3,1
+80000016:	2011                	jal	8000001a <solveBoard>
+80000018:	a27d                	j	800001c6 <exit>
+
+8000001a <solveBoard>:
+8000001a:	1141                	addi	sp,sp,-16
+8000001c:	c636                	sw	a3,12(sp)
+8000001e:	c432                	sw	a2,8(sp)
+80000020:	c22e                	sw	a1,4(sp)
+80000022:	c006                	sw	ra,0(sp)
+80000024:	2a81                	jal	80000174 <saveTempRegisters>
+80000026:	02000713          	li	a4,32
+8000002a:	000772d7          	vsetvli	t0,a4,e8,m1,tu,mu
+8000002e:	4281                	li	t0,0
+
+80000030 <CheckEmpty>:
+80000030:	0722de63          	bge	t0,s2,800000ac <solved>
+80000034:	03228333          	mul	t1,t0,s2
+80000038:	9326                	add	t1,t1,s1
+8000003a:	02030007          	vle8.v	v0,(t1)
+8000003e:	620040d7          	vmseq.vx	v1,v0,zero
+80000042:	4218a3d7          	vfirst.m	t2,v1
+80000046:	0003de63          	bgez	t2,80000062 <processEmpty>
+8000004a:	02030313          	addi	t1,t1,32
+8000004e:	02030007          	vle8.v	v0,(t1)
+80000052:	620040d7          	vmseq.vx	v1,v0,zero
+80000056:	4218a3d7          	vfirst.m	t2,v1
+8000005a:	0003d463          	bgez	t2,80000062 <processEmpty>
+8000005e:	0285                	addi	t0,t0,1
+80000060:	bfc1                	j	80000030 <CheckEmpty>
+
+80000062 <processEmpty>:
+80000062:	8596                	mv	a1,t0
+80000064:	861e                	mv	a2,t2
+80000066:	4685                	li	a3,1
+
+80000068 <checkFill>:
+80000068:	02d94a63          	blt	s2,a3,8000009c <reject>
+8000006c:	2881                	jal	800000bc <isSafe>
+8000006e:	03351563          	bne	a0,s3,80000098 <nope>
+80000072:	03258eb3          	mul	t4,a1,s2
+80000076:	9eb2                	add	t4,t4,a2
+80000078:	9ea6                	add	t4,t4,s1
+8000007a:	00de8023          	sb	a3,0(t4)
+8000007e:	03260f33          	mul	t5,a2,s2
+80000082:	9f2e                	add	t5,t5,a1
+80000084:	9f56                	add	t5,t5,s5
+80000086:	00df0023          	sb	a3,0(t5)
+8000008a:	3f41                	jal	8000001a <solveBoard>
+8000008c:	03350063          	beq	a0,s3,800000ac <solved>
+80000090:	000e8023          	sb	zero,0(t4)
+80000094:	000f0023          	sb	zero,0(t5)
+
+80000098 <nope>:
+80000098:	0685                	addi	a3,a3,1
+8000009a:	b7f9                	j	80000068 <checkFill>
+
+8000009c <reject>:
+8000009c:	20ed                	jal	80000186 <restoreTempRegisters>
+8000009e:	4082                	lw	ra,0(sp)
+800000a0:	4592                	lw	a1,4(sp)
+800000a2:	4622                	lw	a2,8(sp)
+800000a4:	46b2                	lw	a3,12(sp)
+800000a6:	0141                	addi	sp,sp,16
+800000a8:	4501                	li	a0,0
+800000aa:	8082                	ret
+
+800000ac <solved>:
+800000ac:	28e9                	jal	80000186 <restoreTempRegisters>
+800000ae:	4082                	lw	ra,0(sp)
+800000b0:	4592                	lw	a1,4(sp)
+800000b2:	4622                	lw	a2,8(sp)
+800000b4:	46b2                	lw	a3,12(sp)
+800000b6:	0141                	addi	sp,sp,16
+800000b8:	4505                	li	a0,1
+800000ba:	8082                	ret
+
+800000bc <isSafe>:
+800000bc:	1161                	addi	sp,sp,-8
+800000be:	c252                	sw	s4,4(sp)
+800000c0:	c006                	sw	ra,0(sp)
+800000c2:	284d                	jal	80000174 <saveTempRegisters>
+800000c4:	03258333          	mul	t1,a1,s2
+800000c8:	9326                	add	t1,t1,s1
+800000ca:	02030107          	vle8.v	v2,(t1)
+800000ce:	6226c1d7          	vmseq.vx	v3,v2,a3
+800000d2:	423823d7          	vcpop.m	t2,v3
+800000d6:	08039363          	bnez	t2,8000015c <notSafe>
+800000da:	02030313          	addi	t1,t1,32
+800000de:	02030107          	vle8.v	v2,(t1)
+800000e2:	6226c1d7          	vmseq.vx	v3,v2,a3
+800000e6:	423823d7          	vcpop.m	t2,v3
+800000ea:	06039963          	bnez	t2,8000015c <notSafe>
+800000ee:	03260333          	mul	t1,a2,s2
+800000f2:	9356                	add	t1,t1,s5
+800000f4:	02030107          	vle8.v	v2,(t1)
+800000f8:	6226c1d7          	vmseq.vx	v3,v2,a3
+800000fc:	423823d7          	vcpop.m	t2,v3
+80000100:	04039e63          	bnez	t2,8000015c <notSafe>
+80000104:	02030313          	addi	t1,t1,32
+80000108:	02030107          	vle8.v	v2,(t1)
+8000010c:	6226c1d7          	vmseq.vx	v3,v2,a3
+80000110:	423823d7          	vcpop.m	t2,v3
+80000114:	04039463          	bnez	t2,8000015c <notSafe>
+80000118:	4721                	li	a4,8
+8000011a:	000772d7          	vsetvli	t0,a4,e8,m1,tu,mu
+8000011e:	4321                	li	t1,8
+80000120:	0265e3b3          	rem	t2,a1,t1
+80000124:	407583b3          	sub	t2,a1,t2
+80000128:	4e01                	li	t3,0
+8000012a:	02666f33          	rem	t5,a2,t1
+8000012e:	41e60f33          	sub	t5,a2,t5
+
+80000132 <boxCheckLoop>:
+80000132:	026e5b63          	bge	t3,t1,80000168 <safe>
+80000136:	93f2                	add	t2,t2,t3
+80000138:	027903b3          	mul	t2,s2,t2
+8000013c:	93fa                	add	t2,t2,t5
+8000013e:	93a6                	add	t2,t2,s1
+80000140:	02038207          	vle8.v	v4,(t2)
+80000144:	6246c2d7          	vmseq.vx	v5,v4,a3
+80000148:	42582ed7          	vcpop.m	t4,v5
+8000014c:	000e9863          	bnez	t4,8000015c <notSafe>
+80000150:	0e05                	addi	t3,t3,1
+80000152:	0265e3b3          	rem	t2,a1,t1
+80000156:	407583b3          	sub	t2,a1,t2
+8000015a:	bfe1                	j	80000132 <boxCheckLoop>
+
+8000015c <notSafe>:
+8000015c:	4501                	li	a0,0
+8000015e:	2025                	jal	80000186 <restoreTempRegisters>
+80000160:	4082                	lw	ra,0(sp)
+80000162:	4a12                	lw	s4,4(sp)
+80000164:	0121                	addi	sp,sp,8
+80000166:	8082                	ret
+
+80000168 <safe>:
+80000168:	4505                	li	a0,1
+8000016a:	2831                	jal	80000186 <restoreTempRegisters>
+8000016c:	4082                	lw	ra,0(sp)
+8000016e:	4a12                	lw	s4,4(sp)
+80000170:	0121                	addi	sp,sp,8
+80000172:	8082                	ret
+
+80000174 <saveTempRegisters>:
+80000174:	1111                	addi	sp,sp,-28
+80000176:	cc7e                	sw	t6,24(sp)
+80000178:	ca7a                	sw	t5,20(sp)
+8000017a:	c876                	sw	t4,16(sp)
+8000017c:	c672                	sw	t3,12(sp)
+8000017e:	c41e                	sw	t2,8(sp)
+80000180:	c21a                	sw	t1,4(sp)
+80000182:	c016                	sw	t0,0(sp)
+80000184:	8082                	ret
+
+80000186 <restoreTempRegisters>:
+80000186:	4282                	lw	t0,0(sp)
+80000188:	4312                	lw	t1,4(sp)
+8000018a:	43a2                	lw	t2,8(sp)
+8000018c:	4e32                	lw	t3,12(sp)
+8000018e:	4ec2                	lw	t4,16(sp)
+80000190:	4f52                	lw	t5,20(sp)
+80000192:	4fe2                	lw	t6,24(sp)
+80000194:	0171                	addi	sp,sp,28
+80000196:	8082                	ret
+
+80000198 <convertToTranspose>:
+80000198:	4381                	li	t2,0
+
+8000019a <outer_loop>:
+8000019a:	03238563          	beq	t2,s2,800001c4 <end_outer_loop>
+8000019e:	4e01                	li	t3,0
+
+800001a0 <inner_loop>:
+800001a0:	032e0063          	beq	t3,s2,800001c0 <end_inner_loop>
+800001a4:	03238eb3          	mul	t4,t2,s2
+800001a8:	9ef2                	add	t4,t4,t3
+800001aa:	9ea6                	add	t4,t4,s1
+800001ac:	000e8f03          	lb	t5,0(t4)
+800001b0:	032e0fb3          	mul	t6,t3,s2
+800001b4:	9f9e                	add	t6,t6,t2
+800001b6:	9fd6                	add	t6,t6,s5
+800001b8:	01ef8023          	sb	t5,0(t6)
+800001bc:	0e05                	addi	t3,t3,1
+800001be:	b7cd                	j	800001a0 <inner_loop>
+
+800001c0 <end_inner_loop>:
+800001c0:	0385                	addi	t2,t2,1
+800001c2:	bfe1                	j	8000019a <outer_loop>
+
+800001c4 <end_outer_loop>:
+800001c4:	8082                	ret
+
+800001c6 <exit>:
+800001c6:	4281                	li	t0,0
+800001c8:	03290333          	mul	t1,s2,s2
+
+800001cc <loop>:
+800001cc:	00628863          	beq	t0,t1,800001dc <_finish>
+800001d0:	005483b3          	add	t2,s1,t0
+800001d4:	00038e03          	lb	t3,0(t2)
+800001d8:	0285                	addi	t0,t0,1
+800001da:	bfcd                	j	800001cc <loop>
+
+800001dc <_finish>:
+800001dc:	d05801b7          	lui	gp,0xd0580
+800001e0:	0ff00293          	li	t0,255
+800001e4:	00518023          	sb	t0,0(gp) # d0580000 <_end+0x5057fd4c>
+800001e8:	fe000ae3          	beqz	zero,800001dc <_finish>
+800001ec:	0001                	nop
+800001ee:	0001                	nop
+800001f0:	0001                	nop
+800001f2:	0001                	nop
+800001f4:	0001                	nop
+800001f6:	0001                	nop
+800001f8:	0001                	nop
+800001fa:	0001                	nop
+800001fc:	0001                	nop
+800001fe:	0001                	nop
+80000200:	0001                	nop
+80000202:	0001                	nop
+80000204:	0001                	nop
+80000206:	0001                	nop
+80000208:	0001                	nop
+8000020a:	0001                	nop
+8000020c:	0001                	nop
+8000020e:	0001                	nop
+80000210:	0001                	nop
+80000212:	0001                	nop
+80000214:	0001                	nop
+80000216:	0001                	nop
+80000218:	0001                	nop
+8000021a:	0001                	nop
+8000021c:	0001                	nop
+8000021e:	0001                	nop
+80000220:	0001                	nop
+80000222:	0001                	nop
+80000224:	0001                	nop
+80000226:	0001                	nop
+80000228:	0001                	nop
+8000022a:	0001                	nop
+8000022c:	0001                	nop
+8000022e:	0001                	nop
+80000230:	0001                	nop
+80000232:	0001                	nop
+80000234:	0001                	nop
+80000236:	0001                	nop
+80000238:	0001                	nop
+8000023a:	0001                	nop
+8000023c:	0001                	nop
+8000023e:	0001                	nop
+80000240:	0001                	nop
+80000242:	0001                	nop
+80000244:	0001                	nop
+80000246:	0001                	nop
+80000248:	0001                	nop
+8000024a:	0001                	nop
+8000024c:	0001                	nop
+8000024e:	0001                	nop
+80000250:	0001                	nop
+80000252:	0001                	nop
+80000254:	0001                	nop
+80000256:	0001                	nop
+80000258:	0001                	nop
+8000025a:	0001                	nop
+8000025c:	0001                	nop
+8000025e:	0001                	nop
+80000260:	0001                	nop
+80000262:	0001                	nop
+80000264:	0001                	nop
+80000266:	0001                	nop
+80000268:	0001                	nop
+8000026a:	0001                	nop
+8000026c:	0001                	nop
+8000026e:	0001                	nop
+80000270:	0001                	nop
+80000272:	0001                	nop
+80000274:	0001                	nop
+80000276:	0001                	nop
+80000278:	0001                	nop
+8000027a:	0001                	nop
+8000027c:	0001                	nop
+8000027e:	0001                	nop
+80000280:	0001                	nop
+80000282:	0001                	nop
+80000284:	0001                	nop
+80000286:	0001                	nop
+80000288:	0001                	nop
+8000028a:	0001                	nop
+8000028c:	0001                	nop
+8000028e:	0001                	nop
+80000290:	0001                	nop
+80000292:	0001                	nop
+80000294:	0001                	nop
+80000296:	0001                	nop
+80000298:	0001                	nop
+8000029a:	0001                	nop
+8000029c:	0001                	nop
+8000029e:	0001                	nop
+800002a0:	0001                	nop
+800002a2:	0001                	nop
+800002a4:	0001                	nop
+800002a6:	0001                	nop
+800002a8:	0001                	nop
+800002aa:	0001                	nop
+800002ac:	0001                	nop
+800002ae:	0001                	nop
+800002b0:	0001                	nop
+800002b2:	0001                	nop
