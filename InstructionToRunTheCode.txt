@@ -1,0 +1,14 @@
+To run the code go to the folder scalerCode (to run scaler code) or go to the vectorizedCode folder (to run vector code)
+
+Assuming whisper and Veer ISS are installed in your PC
+
+In the folder open terminal and type following commands
+1)make clean
+2)make all
+
+this will generate a log file in the folder
+
+copy this log file and paste it in Sudoku-Veer-ISS-Log-to-Memory-Converter folder
+make sure in the pyhthon script the correct path is given to the log file
+run the python script and this will output a csv file
+the output will be the solved sudoku board in csv format
